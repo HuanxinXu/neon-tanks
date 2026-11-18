@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b10" />
+  <meta name="description" content="霓虹坦克：一款使用 HTML5 Canvas 制作的复古街机坦克大战。守住基地，击退五波敌军。" />
+  <title>霓虹坦克 · NEON TANKS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cpath d='M20 18h24v6H20zm4 8h16v22H24zM14 26h8v18h-8zm28 0h8v18h-8zM28 10h8v10h-8z' fill='%235eead4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true">
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
+    <div class="noise"></div>
+  </div>
+
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M20 18h24v6H20zm4 8h16v22H24zM14 26h8v18h-8zm28 0h8v18h-8zM28 10h8v10h-8z" />
+        </svg>
+        <div class="brand-copy">
+          <h1>NEON TANKS</h1>
+          <p>霓虹坦克 · 街机防卫战</p>
+        </div>
+      </div>
+
+      <div class="hud" role="status" aria-label="游戏状态">
+        <div class="stat">
+          <span class="stat-label">得分</span>
+          <strong id="hudScore">000000</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">波次</span>
+          <strong id="hudLevel">01</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">生命</span>
+          <strong id="hudLives">×3</strong>
+        </div>
+        <div class="stat stat-wide">
+          <span class="stat-label">剩余敌军</span>
+          <strong id="hudRemaining">--</strong>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="icon-btn" id="soundBtn" type="button" aria-label="关闭音效" title="音效 (M)">
+          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+            <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+            <path d="m16 9 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="pauseBtn" type="button" aria-label="暂停游戏" title="暂停 (P)">
+          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/>
+            <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>
+          </svg>
+          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5.5v13l10-6.5-10-6.5z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="stage" aria-label="霓虹坦克游戏区域">
+      <canvas id="game" width="680" height="600" tabindex="0"
+        aria-label="坦克大战游戏画面，使用方向键或 WASD 移动，空格开火"></canvas>
+      <div class="stage-frame" aria-hidden="true"></div>
+      <div class="scanlines" aria-hidden="true"></div>
+      <div class="buffs" id="buffs" aria-hidden="true"></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="overlay" id="overlay">
+        <div class="panel" id="panel"></div>
+      </div>
+    </section>
+
+    <div class="touch-controls" id="touchControls" aria-label="触摸操作">
+      <div class="dpad">
+        <button class="touch-btn dpad-up" type="button" data-dir="0" aria-label="向上">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="touch-btn dpad-left" type="button" data-dir="3" aria-label="向左">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="touch-btn dpad-right" type="button" data-dir="1" aria-label="向右">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="touch-btn dpad-down" type="button" data-dir="2" aria-label="向下">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="touch-actions">
+        <button class="touch-btn pause-touch" id="touchPause" type="button" aria-label="暂停">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+        </button>
+        <button class="fire-btn" id="fireBtn" type="button" aria-label="开火">FIRE</button>
+      </div>
+    </div>
+
+    <footer class="hint-bar">
+      <span><kbd>WASD</kbd><span class="sep">/</span><kbd>方向键</kbd> 移动</span>
+      <span><kbd>空格</kbd><span class="sep">/</span><kbd>J</kbd> 开火</span>
+      <span><kbd>P</kbd> 暂停</span>
+      <span><kbd>M</kbd> 静音</span>
+    </footer>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
